@@ -1,36 +1,57 @@
 const net = require("node:net");
+const { ChatRoom, Participant } = require("./chatroom");
 
 const server = net.createServer();
 const PORT = 8000;
 
 let id = 0;
-const clients = [];
+
+const participants = [];
 
 const broadcast = (userName, data) => {
-  clients.forEach(({ socket }) => {
+  participants.forEach(({ socket }) => {
     socket.write(`${userName}: ${data}`);
   });
 };
 
-server.on("connection", (socket) => {
-  socket.setEncoding("utf-8");
-  socket.write("Enter your name");
+const onEntry = (name) => {
+  participants.forEach(({ socket }) => {
+    socket.write(`${name} joined`);
+  });
+};
 
-  const clientId = id;
-  id++;
-  console.log("connection estb");
+const onLeave = (name) => {
+  participants.forEach(({ socket }) => {
+    socket.write(`${name} left`);
+  });
+};
+
+const addToChatRoom = (chatRoom, socket) => {
+  socket.setEncoding("utf-8");
+  const prompt = "Enter your name";
+  socket.write(prompt);
 
   socket.once("data", (data) => {
-    const userName = data.trim();
-    clients.push({ userName, socket });
-    socket.on("data", (data) => broadcast(userName, data));
+    const name = data.trim();
+    onEntry(name);
+
+    participants.push({ name, socket });
+    socket.on("data", (message) => broadcast(name, message));
+
+    socket.on("end", () => {
+      onLeave(name);
+    });
+  });
+};
+
+const main = () => {
+  const chatServer = net.createServer();
+  chatServer.listen(PORT, () => {
+    console.log("chat server is on");
   });
 
-  socket.on("end", () => {
-    console.log(`${clientId} left`);
-  });
-});
+  const chatRoom = new ChatRoom();
+  chatServer.on("connection", (socket) => addToChatRoom(chatRoom, socket));
+};
 
-server.listen(PORT, () => {
-  console.log("listening");
-});
+main();

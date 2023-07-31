@@ -4,3 +4,15 @@
 4. model the code structure
 5. inform all the user when some one is joined or left
 6. personal chat 
+
+
+like what will be the contract ?
+server side
+chat room
+model 
+participant and chatroom
+when any message will come, what I need is  messenger id / name.
+chat room will tell who is the author of any message.
+
+where is controller ?
+controller will 
