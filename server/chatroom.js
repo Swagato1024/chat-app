@@ -6,23 +6,19 @@ class Participant {
   constructor(id, name) {
     this.#id = id;
     this.#name = name;
+    this.#friends = [];
   }
 
   get profile() {
     return {
       id: this.#id,
       name: this.#name,
-      friends: [...this.#friends],
     };
-  }
-
-  addFriend(friend) {
-    this.#friends.push(friend);
   }
 }
 
 class ChatRoom {
-  #participants;
+  #participants; // [{socket, participant}]
   #count;
 
   constructor() {
@@ -30,15 +26,26 @@ class ChatRoom {
     this.#count = 0;
   }
 
-  register(name, onData) {
+  register(name, socket) {
     this.#count += 1;
     const participant = new Participant(this.#count, name);
-    this.#participants.push(participant, socket);
+    this.#participants.push({ socket, participant });
 
-    onData();
+    socket.on("data", (data) => {
+      this.#broadcast(name, data);
+    });
+
+    socket.on("end", () => {
+      this.#broadcast(name, "left");
+    });
   }
 
-  broadcast(name) {
+  #broadcast(name, data) {
+    this.#participants.forEach(({ socket }) => {
+      socket.write(
+        `${name}: ${data} -> ${this.#participants.length}`
+      );
+    });
   }
 }
 

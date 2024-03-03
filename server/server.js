@@ -33,10 +33,12 @@ const addToChatRoom = (chatRoom, socket) => {
 
   socket.once("data", (data) => {
     const name = data.trim();
-    onEntry(name);
+    // onEntry(name);
 
-    participants.push({ name, socket });
-    socket.on("data", (message) => broadcast(name, message));
+    chatRoom.register(name, socket);
+
+    // participants.push({ name, socket });
+    // socket.on("data", (message) => broadcast(name, message));
 
     socket.on("end", () => {
       onLeave(name);
